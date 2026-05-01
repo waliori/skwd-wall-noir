@@ -49,6 +49,31 @@
             roboto-mono
             material-design-icons
           ];
+
+          # ── skwd-tracker (dwl-ipc subscriber, Python) ─────────────────────
+          # Generates pywayland bindings for zdwl_ipc_unstable_v2 from the
+          # vendored XML, then wraps tracker.py as the `skwd-tracker` binary.
+          dwlIpcBindings = pkgs.runCommand "dwl-ipc-pywayland" {
+            nativeBuildInputs = [ pkgs.python3Packages.pywayland pkgs.pkg-config pkgs.wayland.dev ];
+          } ''
+            mkdir -p $out
+            # Pass wayland.xml first so cross-protocol references (wl_output)
+            # resolve. The scanner emits the wayland module too — drop it,
+            # pywayland's built-in version provides the canonical one. Then
+            # rewrite relative imports (`from ..wayland import`) to absolute
+            # (`from pywayland.protocol.wayland import`) since our generated
+            # module isn't installed *inside* pywayland's protocol package.
+            pywayland-scanner \
+              -i ${pkgs.wayland-scanner}/share/wayland/wayland.xml \
+                 ${./protocols/dwl-ipc-unstable-v2.xml} \
+              -o $out
+            rm -rf $out/wayland
+            ${pkgs.gnused}/bin/sed -i \
+              's|from \.\.wayland import|from pywayland.protocol.wayland import|g' \
+              $out/dwl_ipc_unstable_v2/*.py
+          '';
+
+          trackerPython = pkgs.python3.withPackages (ps: [ ps.pywayland ]);
         in {
           default = pkgs.stdenv.mkDerivation {
             pname = "skwd-wall";
@@ -71,6 +96,13 @@
               makeWrapper ${quickshellWithModules}/bin/quickshell $out/bin/skwd-wall \
                 --prefix PATH : ${pkgs.lib.makeBinPath runtimeDeps} \
                 --add-flags "-p $out/share/skwd-wall/shell.qml"
+
+              # skwd-tracker: dwl-ipc subscriber that pushes focus changes to
+              # ~/.cache/skwd-wall/active-monitor. Pair with `monitor: "auto"`.
+              install -Dm644 tracker.py $out/share/skwd-wall/tracker.py
+              makeWrapper ${trackerPython}/bin/python $out/bin/skwd-tracker \
+                --add-flags $out/share/skwd-wall/tracker.py \
+                --prefix PYTHONPATH : ${dwlIpcBindings}
 
               makeWrapper ${daemon}/bin/skwd $out/bin/skwd \
                 --prefix PATH : ${pkgs.lib.makeBinPath daemonDeps} \

@@ -73,6 +73,20 @@ QtObject {
     readonly property string steamDir: _resolve(_data.paths?.steam)
 
     readonly property string mainMonitor: _data.monitor ?? ""
+    // When `monitor: "auto"`, read the active monitor name from a cache
+    // file written by `skwd-tracker` (see tracker.qml). Falls back to
+    // mainMonitor when auto isn't enabled or the tracker hasn't reported
+    // yet — picker still resolves a screen via Quickshell.screens default.
+    readonly property bool autoMonitor: mainMonitor === "auto"
+    property string _autoActiveMonitor: ""
+    readonly property string effectiveMonitor: autoMonitor ? _autoActiveMonitor : mainMonitor
+    property var _activeMonitorFile: FileView {
+        path: config.cacheDir + "/active-monitor"
+        preload: true
+        watchChanges: true
+        onFileChanged: reload()
+        onTextChanged: config._autoActiveMonitor = text().trim()
+    }
     readonly property string ollamaUrl: Quickshell.env("SKWD_OLLAMA_URL") || (_data.ollama?.url ?? "")
     readonly property string ollamaModel: _data.ollama?.model ?? ""
     readonly property string ollamaConsolidationModel: _data.ollama?.consolidationModel ?? ""

@@ -18,6 +18,9 @@ Scope {
   property alias swService: swService
   property alias _whService: whService
   property string mainMonitor: Config.mainMonitor
+  // When `monitor: "auto"` is set in config.json, this resolves to the screen
+  // the cursor was last tracked on (via the optional skwd-tracker shell).
+  property string effectiveMonitor: Config.effectiveMonitor
   signal wallpaperChanged()
   signal uiReady()
 
@@ -364,7 +367,7 @@ Scope {
   PanelWindow {
     id: selectorPanel
 
-    screen: Quickshell.screens.find(s => s.name === wallpaperSelector.mainMonitor)
+    screen: Quickshell.screens.find(s => s.name === wallpaperSelector.effectiveMonitor)
         ?? Quickshell.screens[0]
 
     anchors {

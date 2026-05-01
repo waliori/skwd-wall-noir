@@ -1,3 +1,28 @@
+# Skwd-wall-noir
+
+> [!NOTE]
+> **This is a personal fork of [liixini/skwd-wall](https://github.com/liixini/skwd-wall)** tailored for [NoirWM](https://github.com/waliori/noirwm) (dwl-class wlroots compositor). All credit for the original project goes to **liixini**. Below is upstream's documentation; the *added/changed* bits in this fork are summarised first.
+>
+> ## What this fork adds on top of upstream
+>
+> - **`monitor: "auto"` mode in `config.json`** — when set, the picker opens on whichever output the compositor reports as active, instead of being pinned to a fixed monitor name.
+> - **`skwd-tracker` binary** — small Python service that subscribes to dwl's [`zdwl_ipc_unstable_v2`](protocols/dwl-ipc-unstable-v2.xml) protocol and writes the active-output name to `$XDG_CACHE_HOME/skwd-wall/active-monitor` whenever the compositor pushes an `active` event. No cursor polling, no edge-strip sentinels, no busy-loop.
+> - **QML side** — `Config.qml` exposes an `effectiveMonitor` derived property (`autoMonitor ? _autoActiveMonitor : mainMonitor`) that watches the cache file via `FileView`. `WallpaperSelector.qml`'s `PanelWindow.screen` reads `effectiveMonitor` instead of `mainMonitor`.
+> - **Vendored protocol XML** — `protocols/dwl-ipc-unstable-v2.xml` from the noir source.
+> - **Build wiring** — `flake.nix` runs `pywayland-scanner` against the vendored XML at build time and wraps `tracker.py` as the `skwd-tracker` binary.
+>
+> ## Usage
+>
+> 1. Set `"monitor": "auto"` in your `config.json`.
+> 2. Run `skwd-tracker` as a systemd user service alongside `skwd-daemon`.
+> 3. `skwd wall toggle` opens the picker on whichever monitor has compositor focus.
+>
+> Compositor scope: this only works on dwl-class compositors that ship `zdwl_ipc_unstable_v2` (dwl, mango, NoirWM). For Hyprland, Sway, niri etc. swap the tracker for a respective IPC client; everything else (Config, WallpaperSelector) is portable.
+>
+> ---
+>
+> The remainder of this README is upstream's. Caveats and feature lists below describe upstream behavior unless otherwise stated.
+
 # Skwd-wall
 
 > [!CAUTION]
