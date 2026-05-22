@@ -18,8 +18,13 @@ ShellRoot {
             // it here so the picker shows the live spanned wallpaper behind
             // its (transparent) UI. Without span, leave the backdrop alone —
             // it's showing the same full image awww would show anyway.
+            //
+            // The daemon spawns skwd-paper *after* it launches the picker, so
+            // a one-shot kill at QML load races and usually fires too early.
+            // Run a short repeating sweep that polls + pkills for ~3s, which
+            // covers any reasonable daemon-spawn latency.
             if (Config.spanEnabled)
-                _killSkwdPaper.running = true
+                _killSkwdPaperTimer.start()
             Qt.callLater(function() {
                 root._beginSelectorTiming()
                 wallpaperSelectorLoader.active = true
@@ -32,6 +37,21 @@ ShellRoot {
         command: ["sh", "-c",
             "pkill -9 -x skwd-paper 2>/dev/null; " +
             "pkill -9 -x skwd-paper-still 2>/dev/null; true"]
+    }
+
+    property var _killSkwdPaperTimer: Timer {
+        id: killSkwdPaperTimer
+        interval: 150
+        repeat: true
+        property int _ticks: 0
+        onTriggered: {
+            _killSkwdPaper.running = true
+            _ticks += 1
+            if (_ticks >= 20) {  // ~3 seconds total
+                stop()
+                _ticks = 0
+            }
+        }
     }
 
     property double selectorOpenRequestedMs: 0
