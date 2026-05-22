@@ -103,6 +103,12 @@ QtObject {
     readonly property bool randomIncludeWE: _data.general?.randomIncludeWE !== false
     readonly property bool randomIncludeFavourites: _data.general?.randomIncludeFavourites !== false
     readonly property bool wallpaperPerMonitor: _data.general?.wallpaperPerMonitor === true
+    // Multi-monitor span (top-level `span` block in config.json). When
+    // enabled, the WalioriOS-side apply-wallpaper.sh slices the static
+    // image across `spanOutputs` ("all" or a JSON array of names) via
+    // rwpspread + awww. Video and WE wallpapers ignore it.
+    readonly property bool spanEnabled: _data.span?.enabled === true
+    readonly property var spanOutputs: _data.span?.outputs ?? "all"
     readonly property bool notifyOnWallpaperChange: _data.general?.notifyOnWallpaperChange !== false
     readonly property string notificationsBuiltIn: _data.notifications?.builtIn ?? "never"
     readonly property real uiScale: Math.max(1.0, Math.min(2.0, _data.general?.uiScale ?? 1.0))

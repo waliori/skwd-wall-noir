@@ -496,6 +496,35 @@ Item {
           color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceText.r, settingsPanel.colors.surfaceText.g, settingsPanel.colors.surfaceText.b, 0.4) : Qt.rgba(1, 1, 1, 0.3)
           wrapMode: Text.Wrap
         }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Span across monitors"
+          checked: Config.spanEnabled
+          onToggle: function(v) {
+            settingsPanel._saveConfigKey("span.enabled", v)
+            // Outputs default to "all" if the key isn't already set —
+            // skwd-span CLI users may have left it implicit.
+            if (Config.spanOutputs === undefined || Config.spanOutputs === null)
+              settingsPanel._saveConfigKey("span.outputs", "all")
+            _spanReloadTimer.restart()
+          }
+        }
+
+        Text {
+          width: parent.width
+          text: "Slice one image across all connected monitors as a single canvas. Static images only — video and WE fall back to per-output."
+          font.family: Style.fontFamily; font.pixelSize: settingsPanel._s(10)
+          color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceText.r, settingsPanel.colors.surfaceText.g, settingsPanel.colors.surfaceText.b, 0.4) : Qt.rgba(1, 1, 1, 0.3)
+          wrapMode: Text.Wrap
+        }
+
+        Timer {
+          id: _spanReloadTimer
+          interval: 500
+          repeat: false
+          onTriggered: DaemonClient.restore()
+        }
       }
 
       Rectangle {
