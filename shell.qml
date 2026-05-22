@@ -11,11 +11,27 @@ ShellRoot {
     property bool configLoaded: Config.configLoaded
     onConfigLoadedChanged: {
         if (configLoaded) {
+            // skwd-daemon launches `skwd-paper --persist` on `skwd wall toggle`
+            // to draw the source image full-screen on every output as a
+            // picker preview backdrop. With span on, that backdrop covers
+            // awww's per-output slices and visually breaks the canvas. Kill
+            // it here so the picker shows the live spanned wallpaper behind
+            // its (transparent) UI. Without span, leave the backdrop alone —
+            // it's showing the same full image awww would show anyway.
+            if (Config.spanEnabled)
+                _killSkwdPaper.running = true
             Qt.callLater(function() {
                 root._beginSelectorTiming()
                 wallpaperSelectorLoader.active = true
             })
         }
+    }
+
+    property var _killSkwdPaper: Process {
+        id: killSkwdPaper
+        command: ["sh", "-c",
+            "pkill -9 -x skwd-paper 2>/dev/null; " +
+            "pkill -9 -x skwd-paper-still 2>/dev/null; true"]
     }
 
     property double selectorOpenRequestedMs: 0
