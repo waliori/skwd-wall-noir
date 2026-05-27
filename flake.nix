@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     quickshell.url = "github:quickshell-mirror/quickshell";
     awww.url = "git+https://codeberg.org/LGFae/awww";
-    skwd-daemon.url = "github:liixini/skwd-daemon";
+    skwd-daemon.url = "github:waliori/skwd-daemon-noir/noir";
   };
 
   outputs = { self, nixpkgs, quickshell, awww, skwd-daemon, ... }:
